@@ -27,3 +27,7 @@ Or you could use Docker Compose to start everything in production mode, the same
 - Check that Docker engine is running with 'docker ps' (show list of running containers) command.
 - Run 'docker compose -f docker-compose.local.yml up --build'
 - Go to 'http://counter.localhost/' in your browser
+
+
+## Scheme
+![Scheme](./counter.png)
