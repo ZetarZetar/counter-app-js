@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+service CounterService {
+  rpc Increment(CounterRequest) returns (CounterResponse);
+  rpc Decrement(CounterRequest) returns (CounterResponse);
+}
+
+message CounterRequest {
+  int32 value = 1;
+}
+
+message CounterResponse {
+  int32 newValue = 1;
+}

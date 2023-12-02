@@ -1,0 +1,129 @@
+services:
+  traefik:
+    image: traefik:2.10
+    restart: unless-stopped
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./configs/local/traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+    networks:
+      - counter-app
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=local
+    restart: unless-stopped
+    environment:
+      - ENVIRONMENT=local
+    networks:
+      - counter-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`counter.localhost`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+  # Backend main app
+  app:
+    build:
+      context: ./backend/app
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=local
+    restart: unless-stopped
+    depends_on:
+      plugin-incdec:
+        condition: service_started
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      notifications:
+        condition: service_started
+    networks:
+      - counter-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`counter.localhost`) && PathPrefix(`/api/v1/`)"
+      - "traefik.http.services.app.loadbalancer.server.port=3100"
+
+  # Counter plugin
+  plugin-incdec:
+    build:
+      context: ./backend/plugin-incdec
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=local
+    restart: unless-stopped
+    networks:
+      - counter-app
+
+  # Notification service
+  notifications:
+    build:
+      context: ./backend/notifications
+      dockerfile: Dockerfile
+      args:
+        - ENVIRONMENT=local
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - counter-app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.notifications.rule=Host(`counter.localhost`) && Path(`/notifications`)"
+      - "traefik.http.services.notifications.loadbalancer.server.port=3300"
+
+  # Redis database
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    sysctls:
+      - "net.core.somaxconn=4096"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - counter-app
+    volumes:
+      - redis-data:/data
+
+  # RabbitMQ service
+  rabbitmq:
+    image: rabbitmq:3.12-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 3s
+      timeout: 2s
+      retries: 10
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=1234
+    # ports:
+    #   - 5672
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq/
+    networks:
+      - counter-app
+
+# ----------------------------------------------------------
+# Volumes
+# ----------------------------------------------------------
+volumes:
+  redis-data:
+    name: redis-data
+  rabbitmq-data:
+    name: rabbitmq-data
+
+# ----------------------------------------------------------
+# Networks
+# ----------------------------------------------------------
+networks:
+  counter-app:
+    name: counter-app
