@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+service NumberService {
+  rpc Increase(NumberRequest) returns (NumberResponse);
+  rpc Decrease(NumberRequest) returns (NumberResponse);
+  rpc Reset(NumberRequest) returns (NumberResponse);
+}
+
+message NumberRequest {
+  int32 value = 1;
+}
+
+message NumberResponse {
+  int32 newValue = 1;
+}

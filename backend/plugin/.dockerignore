@@ -1,0 +1,14 @@
+.cache
+.eslintrc.json
+.git
+.idea
+.prettierrc
+.vscode
+*.md
+*.yaml
+/dist
+/public/images/*
+/tmp/*
+node_modules
+nodemon.json
+!.gitkeep
