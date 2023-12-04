@@ -1,9 +1,0 @@
-{
-  "ignore": [
-    "**/docker/**",
-    "**/node_modules/**",
-    "**/thunder-tests/**",
-    "**/public/**"
-  ],
-  "delay": 200
-}
