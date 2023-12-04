@@ -156,7 +156,7 @@ body,
 
 #app {
   color: #ffffff;
-  background: #181818;
+  background: #191970;
   transition: color 0.5s, background-color 0.5s;
   display: flex;
   place-items: center;
